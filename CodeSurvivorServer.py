@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-04 16:31:18
+# @Last Modified time: 2019-04-04 17:50:44
 
 import pygame
 import numpy as np
@@ -126,7 +126,11 @@ class Player(pygame.sprite.Sprite):
 			'hunger': self.hunger_value,
 			'thirst': self.thirst_value
 		}
-		self.agent.get_info(info_dict)
+		try:
+			run_function_in_limited_time(self.agent.get_info, info_dict)
+		except:
+			print('{}函数出问题了'.format(self.agent.name))
+		# self.agent.get_info(info_dict)
 
 	def update(self):
 		if abs(self.rect.x-self.x*TILE_SIZE)<5 and abs(self.rect.y-self.y*TILE_SIZE)<5:
@@ -491,8 +495,8 @@ def draw_game_logs():
 
 # 限制玩家函数运行时间，超时则报错
 @func_set_timeout(0.1)
-def get_player_action(f):
-	result = f()
+def run_function_in_limited_time(f, *args):
+	result = f(*args)
 	return result
 
 
@@ -570,7 +574,7 @@ while not game_over:
 		for index, player in enumerate(players):
 			if player.hp > 0:
 				try:
-					action_type, action_value = get_player_action(player.agent.take_action)
+					action_type, action_value = run_function_in_limited_time(player.agent.take_action)
 					if action_type == 'move':
 						x, y = action_value
 						if abs(x-player.x)<=1 and abs(y-player.y)<=1 and\
