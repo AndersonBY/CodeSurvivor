@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-04 00:18:00
+# @Last Modified time: 2019-04-04 17:16:49
 import random
 
 # 注意事项
@@ -21,7 +21,7 @@ import random
 # safe_mask: 当前安全的区域，有毒区域标记为0，无毒区域标记为1
 # next_safe_mask: 下一次缩圈后的安全区域，有毒区域标记为0，无毒区域标记为1
 # tick: 游戏开始以来的tick数
-# count_down: 还有几次tick后就开始缩圈，当tick为0时表示正在缩圈。
+# count_down: 还有几次tick后就开始缩圈，当tick为0时表示正在缩圈
 # players_pos: 一个列表储存所有玩家的位置，形如[(1,2), (3,4), (5,6)]。每个玩家在列表中的编号位置不变
 # hp: 玩家当前血量
 # hunger: 玩家当前饥饿值，100为最不饥饿
