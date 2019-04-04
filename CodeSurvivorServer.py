@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-04 17:50:44
+# @Last Modified time: 2019-04-04 18:20:16
 
 import pygame
 import numpy as np
@@ -24,7 +24,7 @@ FPS = 60
 AGENTS_FOLDER = 'demo_group'
 
 # 每秒更新几次状态
-TICK_RATE = 0.5
+TICK_RATE = 3
 
 SHRINK_INTERVALS = [20, 20, 20, 10, 10, 10, 5, 5]
 
