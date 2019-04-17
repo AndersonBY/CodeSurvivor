@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-04 18:20:16
+# @Last Modified time: 2019-04-17 11:35:19
 
 import pygame
 import numpy as np
@@ -119,6 +119,7 @@ class Player(pygame.sprite.Sprite):
 			'ground_map': game_map.get_map('ground'),
 			'safe_mask': game_map.get_map('safe_mask'),
 			'next_safe_mask': game_map.get_map('next_safe_mask'),
+			'next_safe_center': game_map.next_safe_center,
 			'tick': tick_count,
 			'count_down': game_map.shrink_countdown,
 			'players_pos': players_pos, 
@@ -256,16 +257,10 @@ class GameMap(object):
 					self.next_safe_mask[x][y] = 1
 	
 	def reachable(self, x, y):
-		if x>=0 and x<WIDTH and y>=0 and y<HEIGHT:
-			return True
-		else:
-			return False
+		return x>=0 and x<WIDTH and y>=0 and y<HEIGHT
 
 	def can_stand(self, x, y):
-		if self.reachable(x, y) and self.ground_map[x][y] != 1:
-			return True
-		else:
-			return False
+		return self.reachable(x, y) and self.ground_map[x][y] != 1
 
 	def near_water(self, x, y):
 		for delta in self.deltas:
@@ -276,22 +271,13 @@ class GameMap(object):
 		return False
 
 	def in_forest(self, x, y):
-		if self.ground_map[x][y] == 2:
-			return True
-		else:
-			return False
+		return self.ground_map[x][y] == 2
 
 	def in_water(self, x, y):
-		if self.ground_map[x][y] == 3:
-			return True
-		else:
-			return False
+		return self.ground_map[x][y] == 3
 
 	def in_safe_zone(self, x, y):
-		if self.safe_mask[x][y]:
-			return True
-		else:
-			return False
+		return self.safe_mask[x][y] == 1
 
 	def get_map(self, map_type):
 		if map_type == 'ground':

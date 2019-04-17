@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-04 00:15:51
+# @Last Modified time: 2019-04-17 11:37:22
 import random
 
 # 注意事项
@@ -20,6 +20,7 @@ import random
 # ground_map: 一个numpy数组储存地形。0：草地，1：岩石，2：树林，3：水源
 # safe_mask: 当前安全的区域，有毒区域标记为0，无毒区域标记为1
 # next_safe_mask: 下一次缩圈后的安全区域，有毒区域标记为0，无毒区域标记为1
+# next_safe_center: 下一个安全圈中心点坐标
 # tick: 游戏开始以来的tick数
 # count_down: 还有几次tick后就开始缩圈，当tick为0时表示正在缩圈。
 # players_pos: 一个列表储存所有玩家的位置，形如[(1,2), (3,4), (5,6)]。每个玩家在列表中的编号位置不变
@@ -47,6 +48,7 @@ class Agent(object):
 		self.ground_map = info_dict['ground_map']
 		self.safe_mask = info_dict['safe_mask']
 		self.next_safe_mask = info_dict['next_safe_mask']
+		self.next_safe_center = info_dict['next_safe_center']
 		self.tick = info_dict['tick']
 		self.count_down = info_dict['count_down']
 		self.players_pos = info_dict['players_pos']
