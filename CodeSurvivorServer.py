@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-17 11:35:19
+# @Last Modified time: 2019-04-26 22:20:40
 
 import pygame
 import numpy as np
@@ -21,10 +21,10 @@ LOGS_FONT_SIZE = int(TILE_SIZE/2)
 FPS = 60
 
 # 包含有不同Agent文件的目录
-AGENTS_FOLDER = 'demo_group'
+AGENTS_FOLDER = '20190426-02'
 
 # 每秒更新几次状态
-TICK_RATE = 3
+TICK_RATE = 0.5
 
 SHRINK_INTERVALS = [20, 20, 20, 10, 10, 10, 5, 5]
 
@@ -122,7 +122,7 @@ class Player(pygame.sprite.Sprite):
 			'next_safe_center': game_map.next_safe_center,
 			'tick': tick_count,
 			'count_down': game_map.shrink_countdown,
-			'players_pos': players_pos, 
+			'players_pos': players_pos.copy(), 
 			'hp': self.hp,
 			'hunger': self.hunger_value,
 			'thirst': self.thirst_value
@@ -480,7 +480,7 @@ def draw_game_logs():
 		y += LOGS_FONT_SIZE + 5
 
 # 限制玩家函数运行时间，超时则报错
-@func_set_timeout(0.1)
+@func_set_timeout(0.5)
 def run_function_in_limited_time(f, *args):
 	result = f(*args)
 	return result
@@ -521,6 +521,7 @@ game_map.init_map()
 
 players_pos = init_players_pos(game_map.get_map('ground'))
 players.update()
+print(players_pos)
 
 game_continue = False
 game_over = False
