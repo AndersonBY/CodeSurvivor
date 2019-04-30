@@ -10,9 +10,13 @@
 
 运行CodeSurvivorSever.py文件。
 
+命令行会首先提示输入包含玩家Agent文件的文件夹，默认为demo_group文件夹。
+
+然后会提示是否使用指定地图文件（你可以用浏览器打开MapEditor中的index.html手动编辑一张地图并保存为地图文件），默认为自动生成随机地图。
+
 出现画面后按空格即开始比赛。
 
-你可以用浏览器打开MapEditor中的index.html手动编辑一张地图并保存。
+
 
 ## 游戏规则
 
