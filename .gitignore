@@ -121,6 +121,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-demo_group/__pycache__/
-*.pyc

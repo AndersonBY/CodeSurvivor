@@ -2,16 +2,18 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-30 13:48:29
+# @Last Modified time: 2019-04-30 17:00:26
 
 import pygame
 import numpy as np
 from func_timeout import func_set_timeout
+import click
 import random
 import os
 import math
 import importlib
 import glob
+import json
 
 WIDTH, HEIGHT = 30, 20
 TILE_SIZE = 48
@@ -71,6 +73,7 @@ class Player(pygame.sprite.Sprite):
 		self.origin_image = self.image.copy()
 
 	def update_info(self):
+		global players_pos
 		self.image = self.origin_image.copy()
 		if self.hp<=0:
 			return
@@ -215,28 +218,31 @@ class GameMap(object):
 		self.cur_safe_radius = 1.414*WIDTH
 		self.shrink_done = False
 
-	def init_map(self):
-		self.ground_map = np.zeros((WIDTH, HEIGHT), dtype = int)
+	def init_map(self, map_data):
+		if map_data is not None:
+			self.ground_map = np.array(map_data, dtype = int)
+		else:
+			self.ground_map = np.zeros((WIDTH, HEIGHT), dtype = int)
 
-		for x in range(len(self.ground_map)):
-			for y in range(len(self.ground_map[0])):
-				current_type = self.ground_map[x][y]
-				nearby_count = [0, 0, 0, 0]
-				for delta in self.deltas:
-					delta_x, delta_y = delta
-					if self.reachable(x+delta_x, y+delta_y):
-						nearby_count[self.ground_map[x+delta_x][y+delta_y]] += 1
+			for x in range(len(self.ground_map)):
+				for y in range(len(self.ground_map[0])):
+					current_type = self.ground_map[x][y]
+					nearby_count = [0, 0, 0, 0]
+					for delta in self.deltas:
+						delta_x, delta_y = delta
+						if self.reachable(x+delta_x, y+delta_y):
+							nearby_count[self.ground_map[x+delta_x][y+delta_y]] += 1
 
-				# 生成各种地形的初始概率
-				prob_count = np.array([37, 10, 21, 16])
-				# 对于每个点的地形，更倾向于生成和周围8个点一样类型的地形
-				prob_count += np.array(nearby_count)*2
+					# 生成各种地形的初始概率
+					prob_count = np.array([37, 10, 21, 16])
+					# 对于每个点的地形，更倾向于生成和周围8个点一样类型的地形
+					prob_count += np.array(nearby_count)*2
 
-				ground_type_choice = []
-				for index, value in enumerate(prob_count):
-					ground_type_choice += [index for _ in range(value)]
+					ground_type_choice = []
+					for index, value in enumerate(prob_count):
+						ground_type_choice += [index for _ in range(value)]
 
-				self.ground_map[x][y] = random.choice(ground_type_choice)
+					self.ground_map[x][y] = random.choice(ground_type_choice)
 	
 		self.safe_mask = np.ones((WIDTH, HEIGHT), dtype = int)
 		self.next_safe_center = (random.randint(WIDTH//4, WIDTH*3//4), random.randint(HEIGHT//4, HEIGHT*3//4))
@@ -426,7 +432,7 @@ def draw_text(text, surface, color, font_size, x, y, align='center'):
 	surface.blit(text_surface, text_rect)
 
 def draw_map():
-	global screen
+	global screen, game_map
 	g_map = game_map.get_map('ground')
 	for x in range(len(g_map)):
 		for y in range(len(g_map[0])):
@@ -484,164 +490,182 @@ def run_function_in_limited_time(f, *args):
 	result = f(*args)
 	return result
 
+@click.command()
+@click.option('--agents_folder', prompt='Agents folder', default='demo_group', help='The folder contains competitors.')
+@click.option('--map_file', prompt='Map file(default will generate random map)', default=None, help='The map file.')
+def main(agents_folder, map_file):
+	global screen, players, players_pos, bullets, game_map, last_update_time, winner, tick_count
+	global AGENTS_FOLDER, WIDTH, HEIGHT
+	
+	AGENTS_FOLDER = agents_folder
+	if map_file is not None:
+		with open(map_file, 'r') as f:
+			data = json.load(f)
+			WIDTH = data['width']
+			HEIGHT = data['height']
+			map_data = data['mapArr']
+	else:
+		map_data = None
 
-pygame.init()
-screen = pygame.display.set_mode((WIDTH*TILE_SIZE+STATUS_BOARD_WIDTH, HEIGHT*TILE_SIZE))
-pygame.display.set_caption("Code Survivor")
-clock = pygame.time.Clock()
+	pygame.init()
+	screen = pygame.display.set_mode((WIDTH*TILE_SIZE+STATUS_BOARD_WIDTH, HEIGHT*TILE_SIZE))
+	pygame.display.set_caption("Code Survivor")
+	clock = pygame.time.Clock()
 
-import_imgs()
+	import_imgs()
 
-players = pygame.sprite.Group()
-bullets = pygame.sprite.Group()
+	players = pygame.sprite.Group()
+	bullets = pygame.sprite.Group()
 
-# 从包含有Agent的目录下将所有Agent文件中的Agent类批量import进来
-# 此处暂未做任何安全性检查，请自行辨别文件内容是否安全！
-for file_path in glob.glob('{}/*.py'.format(AGENTS_FOLDER)):
-	if os.path.isfile(file_path):
-		module_spec = importlib.util.spec_from_file_location('Agent', file_path)
-		module = importlib.util.module_from_spec(module_spec)
-		module_spec.loader.exec_module(module)
-		player = Player(module.Agent())
-		players.add(player)
+	# 从包含有Agent的目录下将所有Agent文件中的Agent类批量import进来
+	# 此处暂未做任何安全性检查，请自行辨别文件内容是否安全！
+	for file_path in glob.glob('{}/*.py'.format(AGENTS_FOLDER)):
+		if os.path.isfile(file_path):
+			module_spec = importlib.util.spec_from_file_location('Agent', file_path)
+			module = importlib.util.module_from_spec(module_spec)
+			module_spec.loader.exec_module(module)
+			player = Player(module.Agent())
+			players.add(player)
 
-# 如果想采用普通import方法导入Agent则用下面方法
-# from DemoAgent import Agent
-# player = Player(Agent())
-# players.add(player)
+	# 如果想采用普通import方法导入Agent则用下面方法
+	# from DemoAgent import Agent
+	# player = Player(Agent())
+	# players.add(player)
 
-for index, player in enumerate(players):
-	player.id = index
-	avatar = imgs['avatars'].pop(random.randint(0, len(imgs['avatars'])-1))
-	player.set_image(avatar)
-
-game_map = GameMap()
-game_map.init_map()
-
-players_pos = init_players_pos(game_map.get_map('ground'))
-players.update()
-print(players_pos)
-
-game_continue = False
-game_over = False
-while not game_continue:
-	clock.tick(FPS)
-	event_list = pygame.event.get()
-	for event in event_list:
-		if event.type == pygame.QUIT:
-			game_over = True
-			game_continue = True
-		if event.type == pygame.KEYDOWN:
-			if event.key == pygame.K_SPACE:
-				game_continue = True
-
-	draw_map()
-	players.draw(screen)
 	for index, player in enumerate(players):
-		name = player.agent.name
-		x, y = player.x, player.y
-		draw_text(name, screen, WHITE, 40, x*TILE_SIZE+TILE_SIZE/2, (y+1)*TILE_SIZE)
-	
-	draw_status_board()
-	
-	pygame.display.flip()
+		player.id = index
+		avatar = imgs['avatars'].pop(random.randint(0, len(imgs['avatars'])-1))
+		player.set_image(avatar)
 
-while not game_over:
-	clock.tick(FPS)
-	event_list = pygame.event.get()
-	for event in event_list:
-		if event.type == pygame.QUIT:
-			game_over = True
+	game_map = GameMap()
+	game_map.init_map(map_data)
 
-	now = pygame.time.get_ticks()
-	if now - last_update_time > 1000/TICK_RATE and winner is None:
-		for player in players:
-			player.update_info()
+	players_pos = init_players_pos(game_map.get_map('ground'))
+	players.update()
+
+	game_continue = False
+	game_over = False
+	while not game_continue:
+		clock.tick(FPS)
+		event_list = pygame.event.get()
+		for event in event_list:
+			if event.type == pygame.QUIT:
+				game_over = True
+				game_continue = True
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_SPACE:
+					game_continue = True
+
+		draw_map()
+		players.draw(screen)
+		for index, player in enumerate(players):
+			name = player.agent.name
+			x, y = player.x, player.y
+			draw_text(name, screen, WHITE, 40, x*TILE_SIZE+TILE_SIZE/2, (y+1)*TILE_SIZE)
+		
+		draw_status_board()
+		
+		pygame.display.flip()
+
+	while not game_over:
+		clock.tick(FPS)
+		event_list = pygame.event.get()
+		for event in event_list:
+			if event.type == pygame.QUIT:
+				game_over = True
+
+		now = pygame.time.get_ticks()
+		if now - last_update_time > 1000/TICK_RATE and winner is None:
+			for player in players:
+				player.update_info()
+			for index, player in enumerate(players):
+				if player.hp > 0:
+					try:
+						action_type, action_value = run_function_in_limited_time(player.agent.take_action)
+						if action_type == 'move':
+							x, y = action_value
+							if abs(x-player.x)<=1 and abs(y-player.y)<=1 and\
+								game_map.can_stand(x, y):
+									player.move(x, y)
+									players_pos[index] = action_value
+									game_logs.append('{}移动到了{}'.format(player.agent.name, (x,y)))
+						elif action_type == 'shoot':
+							x, y = action_value
+
+							shoot_success_prob = 1 - game_map.euclidean_dist(x, y, player.x, player.y)/(WIDTH/2)
+							if shoot_success_prob<0:
+								shoot_success_prob = 0
+							if random.random()<shoot_success_prob:
+								shoot_success = True
+							else:
+								shoot_success = False
+
+							bullet = Bullet(player.x, player.y, x, y, shoot_success)
+							bullets.add(bullet)
+
+							if shoot_success:
+								for victim in players:
+									if (x, y) == (victim.x, victim.y) and victim != player:
+										game_logs.append('{0}击中{1}！{1}的HP-{2}!'.format(
+											player.agent.name, victim.agent.name, int(shoot_success_prob*10)+1))
+										# print('{0}击中{1}！{1}的HP-{2}!'.format(
+										# 	player.agent.name, victim.agent.name, int(shoot_success_prob*10)+1))
+										victim.hp -= int(shoot_success_prob*10)+1
+										if victim.hp<0:
+											victim.hp = 0
+										break
+							else:
+								game_logs.append('{}开枪未中！'.format(player.agent.name))
+								# print('{} miss the shot!'.format(player.agent.name))
+					except:
+						game_logs.append('{}函数出问题了'.format(player.agent.name))
+						print('{}函数出问题了'.format(player.agent.name))
+
+			game_map.update()
+			last_update_time = now
+			tick_count += 1
+
+		players.update()
+		bullets.update()
+
+		draw_map()
+		alive_players = []
 		for index, player in enumerate(players):
 			if player.hp > 0:
-				try:
-					action_type, action_value = run_function_in_limited_time(player.agent.take_action)
-					if action_type == 'move':
-						x, y = action_value
-						if abs(x-player.x)<=1 and abs(y-player.y)<=1 and\
-							game_map.can_stand(x, y):
-								player.move(x, y)
-								players_pos[index] = action_value
-								game_logs.append('{}移动到了{}'.format(player.agent.name, (x,y)))
-					elif action_type == 'shoot':
-						x, y = action_value
+				alive_players.append(player)
+				screen.blit(player.image, player.rect)
+				pygame.draw.rect(player.image, RED, (0, 0, player.rect.w*player.hp/100, 3))
+				pygame.draw.rect(player.image, BLUE, (0, 4, player.rect.w*player.hunger_value/100, 3))
+				pygame.draw.rect(player.image, GREEN, (0, 8, player.rect.w*player.thirst_value/100, 3))
+				name = player.agent.name
+				draw_text(name, screen, WHITE, 40, player.rect.x+TILE_SIZE/2, player.rect.y+TILE_SIZE)
+			else:
+				players_pos[index] = (-1, -1)
 
-						shoot_success_prob = 1 - game_map.euclidean_dist(x, y, player.x, player.y)/(WIDTH/2)
-						if shoot_success_prob<0:
-							shoot_success_prob = 0
-						if random.random()<shoot_success_prob:
-							shoot_success = True
-						else:
-							shoot_success = False
+		if len(alive_players) == 1:
+			winner = alive_players[0]
 
-						bullet = Bullet(player.x, player.y, x, y, shoot_success)
-						bullets.add(bullet)
+		bullets.draw(screen)
+		draw_status_board()
+		draw_game_logs()
 
-						if shoot_success:
-							for victim in players:
-								if (x, y) == (victim.x, victim.y) and victim != player:
-									game_logs.append('{0}击中{1}！{1}的HP-{2}!'.format(
-										player.agent.name, victim.agent.name, int(shoot_success_prob*10)+1))
-									# print('{0}击中{1}！{1}的HP-{2}!'.format(
-									# 	player.agent.name, victim.agent.name, int(shoot_success_prob*10)+1))
-									victim.hp -= int(shoot_success_prob*10)+1
-									if victim.hp<0:
-										victim.hp = 0
-									break
-						else:
-							game_logs.append('{}开枪未中！'.format(player.agent.name))
-							# print('{} miss the shot!'.format(player.agent.name))
-				except:
-					game_logs.append('{}函数出问题了'.format(player.agent.name))
-					print('{}函数出问题了'.format(player.agent.name))
+		if winner is not None:
+			draw_text(
+				winner.agent.name,
+				screen, YELLOW, 80, WIDTH*TILE_SIZE/2, HEIGHT*TILE_SIZE/2-100)
+			draw_text(
+				'WINNER WINNER'.format(game_map.shrink_countdown),
+				screen, YELLOW, 80, WIDTH*TILE_SIZE/2, HEIGHT*TILE_SIZE/2)
+			draw_text(
+				'CHICKEN DINNER!'.format(game_map.shrink_countdown),
+				screen, YELLOW, 80, WIDTH*TILE_SIZE/2, HEIGHT*TILE_SIZE/2+85)
 
-		game_map.update()
-		last_update_time = now
-		tick_count += 1
+		if game_map.shrink_countdown>0:
+			draw_text(
+				'缩圈倒计时：{}'.format(game_map.shrink_countdown),
+				screen, WHITE, 40, WIDTH*TILE_SIZE/2, 10)
 
-	players.update()
-	bullets.update()
+		pygame.display.flip()
 
-	draw_map()
-	alive_players = []
-	for index, player in enumerate(players):
-		if player.hp > 0:
-			alive_players.append(player)
-			screen.blit(player.image, player.rect)
-			pygame.draw.rect(player.image, RED, (0, 0, player.rect.w*player.hp/100, 3))
-			pygame.draw.rect(player.image, BLUE, (0, 4, player.rect.w*player.hunger_value/100, 3))
-			pygame.draw.rect(player.image, GREEN, (0, 8, player.rect.w*player.thirst_value/100, 3))
-			name = player.agent.name
-			draw_text(name, screen, WHITE, 40, player.rect.x+TILE_SIZE/2, player.rect.y+TILE_SIZE)
-		else:
-			players_pos[index] = (-1, -1)
-
-	if len(alive_players) == 1:
-		winner = alive_players[0]
-
-	bullets.draw(screen)
-	draw_status_board()
-	draw_game_logs()
-
-	if winner is not None:
-		draw_text(
-			winner.agent.name,
-			screen, YELLOW, 80, WIDTH*TILE_SIZE/2, HEIGHT*TILE_SIZE/2-100)
-		draw_text(
-			'WINNER WINNER'.format(game_map.shrink_countdown),
-			screen, YELLOW, 80, WIDTH*TILE_SIZE/2, HEIGHT*TILE_SIZE/2)
-		draw_text(
-			'CHICKEN DINNER!'.format(game_map.shrink_countdown),
-			screen, YELLOW, 80, WIDTH*TILE_SIZE/2, HEIGHT*TILE_SIZE/2+85)
-
-	if game_map.shrink_countdown>0:
-		draw_text(
-			'缩圈倒计时：{}'.format(game_map.shrink_countdown),
-			screen, WHITE, 40, WIDTH*TILE_SIZE/2, 10)
-
-	pygame.display.flip()
+if __name__ == '__main__':
+	main()
