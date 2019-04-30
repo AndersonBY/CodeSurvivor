@@ -54,6 +54,13 @@ function drawMap() {
 function changeBtnClicked() {
 	MAP_WIDTH = int(widthElement.value());
 	MAP_HEIGHT = int(heightElement.value());
+	mapArr = new Array(MAP_WIDTH)
+	for (var x = 0; x < MAP_WIDTH; x++) {
+		mapArr[x] = new Array(MAP_HEIGHT);
+		for (var y = 0; y < MAP_HEIGHT; y++) {
+			mapArr[x][y] = 0;
+		}
+	}
 	resizeCanvas(MAP_WIDTH*TIEL_SIZE+1, MAP_HEIGHT*TIEL_SIZE+1)
 	drawMap();
 }
