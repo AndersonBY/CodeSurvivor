@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+    <script src="p5.sound.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="utf-8">
+  </head>
+  <body>
+  	<div class="main">
+  		<div id="canvas-container"></div>
+  		<div>
+  			Width: 
+  			<input id="width-input" type="text" width="50" height="0" style="width: 50px;">
+  		</div>
+  		<div>
+  			Height: 
+  			<input id="height-input" type="text" width="50" height="0" style="width: 50px;">
+  		</div>
+  		<div>
+  			<button id="change-btn">改变地图尺寸</button>
+  			<button id="output-btn">生成地图文件</button>
+  		</div>
+  		<div>
+  			<p>按键盘的0、1、2、3改变类型。0：草地，1：岩石，2：树林，3：水源</p>
+  			<p id="current-type">当前类型：0</p>
+  		</div>
+  	</div>
+    <script src="sketch.js"></script>
+</body></html>

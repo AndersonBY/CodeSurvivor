@@ -123,3 +123,4 @@ dmypy.json
 .pyre/
 
 demo_group/__pycache__/
+*.pyc

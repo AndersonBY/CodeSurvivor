@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-04-26 22:20:40
+# @Last Modified time: 2019-04-30 13:48:29
 
 import pygame
 import numpy as np
@@ -21,7 +21,7 @@ LOGS_FONT_SIZE = int(TILE_SIZE/2)
 FPS = 60
 
 # 包含有不同Agent文件的目录
-AGENTS_FOLDER = '20190426-02'
+AGENTS_FOLDER = 'demo_group'
 
 # 每秒更新几次状态
 TICK_RATE = 0.5
@@ -131,7 +131,6 @@ class Player(pygame.sprite.Sprite):
 			run_function_in_limited_time(self.agent.get_info, info_dict)
 		except:
 			print('{}函数出问题了'.format(self.agent.name))
-		# self.agent.get_info(info_dict)
 
 	def update(self):
 		if abs(self.rect.x-self.x*TILE_SIZE)<5 and abs(self.rect.y-self.y*TILE_SIZE)<5:
@@ -480,7 +479,7 @@ def draw_game_logs():
 		y += LOGS_FONT_SIZE + 5
 
 # 限制玩家函数运行时间，超时则报错
-@func_set_timeout(0.5)
+@func_set_timeout(0.1)
 def run_function_in_limited_time(f, *args):
 	result = f(*args)
 	return result
