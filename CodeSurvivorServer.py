@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-05-06 17:31:04
+# @Last Modified time: 2019-05-06 17:34:03
 
 import pygame
 import numpy as np
@@ -502,13 +502,13 @@ def run_function_in_limited_time(f, *args):
 
 @click.command()
 @click.option('--agents_folder', prompt='Agents folder', default='demo_group', help='The folder contains competitors.')
-@click.option('--map_file', prompt='Map file(default will generate random map)', default=None, help='The map file.')
+@click.option('--map_file', prompt='Map file(default will generate random map)', default='None', help='The map file.')
 def main(agents_folder, map_file):
 	global screen, players, players_pos, bullets, game_map, last_update_time, winner, tick_count
 	global AGENTS_FOLDER, WIDTH, HEIGHT
 
 	AGENTS_FOLDER = agents_folder
-	if map_file is not None:
+	if map_file != 'None':
 		with open(map_file, 'r') as f:
 			data = json.load(f)
 			WIDTH = data['width']
@@ -594,7 +594,7 @@ def main(agents_folder, map_file):
 						action_type, action_value = run_function_in_limited_time(player.agent.take_action)
 						if action_type == 'move':
 							x, y = action_value
-							if abs(x - player.x) < =1 and abs(y - player.y) < =1 and\
+							if abs(x - player.x) <= 1 and abs(y - player.y) <= 1 and\
 								game_map.can_stand(x, y):
 									player.move(x, y)
 									players_pos[index] = action_value
