@@ -2,7 +2,7 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-05-06 16:50:03
+# @Last Modified time: 2019-05-06 17:31:04
 
 import pygame
 import numpy as np
@@ -28,6 +28,7 @@ AGENTS_FOLDER = 'demo_group'
 # 每秒更新几次状态
 TICK_RATE = 0.5
 
+# 缩圈时间间隔
 SHRINK_INTERVALS = [20, 20, 20, 10, 10, 10, 5, 5]
 
 RED = (233, 114, 117)
@@ -134,7 +135,7 @@ class Player(pygame.sprite.Sprite):
 		try:
 			run_function_in_limited_time(self.agent.get_info, info_dict)
 		except Exception:
-			print('{}函数出问题了'.format(self.agent.name))
+			print(f'{self.agent.name}函数出问题了')
 
 	def update(self):
 		if abs(self.rect.x - self.x * TILE_SIZE) < 5 and abs(self.rect.y - self.y * TILE_SIZE) < 5:
@@ -528,7 +529,7 @@ def main(agents_folder, map_file):
 
 	# 从包含有Agent的目录下将所有Agent文件中的Agent类批量import进来
 	# 此处暂未做任何安全性检查，请自行辨别文件内容是否安全！
-	for file_path in glob.glob('{}/*.py'.format(AGENTS_FOLDER)):
+	for file_path in glob.glob(f'{AGENTS_FOLDER}/*.py'):
 		if os.path.isfile(file_path):
 			module_spec = importlib.util.spec_from_file_location('Agent', file_path)
 			module = importlib.util.module_from_spec(module_spec)
@@ -597,11 +598,11 @@ def main(agents_folder, map_file):
 								game_map.can_stand(x, y):
 									player.move(x, y)
 									players_pos[index] = action_value
-									game_logs.append('{}移动到了{}'.format(player.agent.name, (x,y)))
+									game_logs.append(f'{player.agent.name}移动到了{(x,y)}')
 						elif action_type == 'shoot':
 							x, y = action_value
 
-							shoot_success_prob = 1 - game_map.euclidean_dist(x, y, player.x, player.y)/(WIDTH/2)
+							shoot_success_prob = 1 - game_map.euclidean_dist(x, y, player.x, player.y) / (WIDTH / 2)
 							if shoot_success_prob < 0:
 								shoot_success_prob = 0
 							if random.random() < shoot_success_prob:
@@ -624,11 +625,11 @@ def main(agents_folder, map_file):
 											victim.hp = 0
 										break
 							else:
-								game_logs.append('{}开枪未中！'.format(player.agent.name))
+								game_logs.append(f'{player.agent.name}开枪未中！')
 								# print('{} miss the shot!'.format(player.agent.name))
 					except Exception:
-						game_logs.append('{}函数出问题了'.format(player.agent.name))
-						print('{}函数出问题了'.format(player.agent.name))
+						game_logs.append(f'{player.agent.name}函数出问题了')
+						print(f'{player.agent.name}函数出问题了')
 
 			game_map.update()
 			last_update_time = now
@@ -663,15 +664,15 @@ def main(agents_folder, map_file):
 				winner.agent.name,
 				screen, YELLOW, 80, WIDTH * TILE_SIZE / 2, HEIGHT * TILE_SIZE / 2 - 100)
 			draw_text(
-				'WINNER WINNER'.format(game_map.shrink_countdown),
+				'WINNER WINNER',
 				screen, YELLOW, 80, WIDTH * TILE_SIZE / 2, HEIGHT * TILE_SIZE / 2)
 			draw_text(
-				'CHICKEN DINNER!'.format(game_map.shrink_countdown),
+				'CHICKEN DINNER!',
 				screen, YELLOW, 80, WIDTH * TILE_SIZE / 2, HEIGHT * TILE_SIZE / 2 + 85)
 
 		if game_map.shrink_countdown > 0:
 			draw_text(
-				'缩圈倒计时：{}'.format(game_map.shrink_countdown),
+				f'缩圈倒计时：{game_map.shrink_countdown}',
 				screen, WHITE, 40, WIDTH * TILE_SIZE / 2, 10)
 
 		pygame.display.flip()
