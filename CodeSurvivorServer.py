@@ -2,11 +2,12 @@
 # @Author: Anderson
 # @Date:   2019-04-02 19:22:08
 # @Last Modified by:   Anderson
-# @Last Modified time: 2019-05-06 17:34:03
+# @Last Modified time: 2019-05-15 13:19:46
 
 import pygame
 import numpy as np
 from func_timeout import func_set_timeout
+from func_timeout.exceptions import FunctionTimedOut
 import click
 import random
 import os
@@ -136,6 +137,8 @@ class Player(pygame.sprite.Sprite):
 			run_function_in_limited_time(self.agent.get_info, info_dict)
 		except Exception:
 			print(f'{self.agent.name}函数出问题了')
+		except FunctionTimedOut:
+			print(f'{self.agent.name}函数超时了')
 
 	def update(self):
 		if abs(self.rect.x - self.x * TILE_SIZE) < 5 and abs(self.rect.y - self.y * TILE_SIZE) < 5:
@@ -630,6 +633,9 @@ def main(agents_folder, map_file):
 					except Exception:
 						game_logs.append(f'{player.agent.name}函数出问题了')
 						print(f'{player.agent.name}函数出问题了')
+					except FunctionTimedOut:
+						game_logs.append(f'{player.agent.name}函数超时了')
+						print(f'{player.agent.name}函数超时了')
 
 			game_map.update()
 			last_update_time = now
