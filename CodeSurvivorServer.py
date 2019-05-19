@@ -638,7 +638,7 @@ def main(agents_folder, map_file):
 						print(f'{player.agent.name}函数超时了')
 
 			game_map.update()
-			last_update_time = now
+			last_update_time = pygame.time.get_ticks()
 			tick_count += 1
 
 		players.update()
